@@ -11,6 +11,7 @@ import UIKit
 class DrawView: UIView {
     var currentLines = [NSValue: Line]()
     var finishedLines = [Line]()
+    var selectedLineIndex: Int?
     
     @IBInspectable var finishedLineColor: UIColor = UIColor.black {
         didSet {
@@ -24,7 +25,7 @@ class DrawView: UIView {
         }
     }
     
-    @IBInspectable var lessThanFortyFiveDegreeLineColor: UIColor = UIColor.green {
+    @IBInspectable var lessThanFortyFiveDegreeLineColor: UIColor = UIColor.purple {
         didSet {
             setNeedsDisplay()
         }
@@ -47,6 +48,18 @@ class DrawView: UIView {
         }
     }
     
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        let doubleTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(doubleTap(gestureRecognizer:)))
+        doubleTapRecognizer.numberOfTapsRequired = 2
+        doubleTapRecognizer.delaysTouchesBegan = true
+        addGestureRecognizer(doubleTapRecognizer)
+        let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(tap(gestureRecognizer:)))
+        tapRecognizer.delaysTouchesBegan = true
+        tapRecognizer.require(toFail: doubleTapRecognizer)
+        addGestureRecognizer(tapRecognizer)
+    }
+    
     func strokeLine(line: Line) {
         let path = UIBezierPath()
         path.lineWidth = lineThickness
@@ -54,6 +67,16 @@ class DrawView: UIView {
         path.move(to: line.begin)
         path.addLine(to: line.end)
         path.stroke()
+    }
+    
+    func doubleTap(gestureRecognizer: UIGestureRecognizer) {
+        currentLines.removeAll(keepingCapacity: false)
+        finishedLines.removeAll(keepingCapacity: false)
+        setNeedsDisplay()
+    }
+    
+    func tap(gestureRecognizer: UIGestureRecognizer) {
+        
     }
     
     override func draw(_ rect: CGRect) {
@@ -75,6 +98,11 @@ class DrawView: UIView {
         currentLineColor.setStroke()
         for (_, line) in currentLines{
             strokeLine(line: line)
+        }
+        if let index = selectedLineIndex {
+            UIColor.green.setStroke()
+            let selectedLine = finishedLines[index]
+            strokeLine(line: selectedLine)
         }
     }
     
@@ -113,7 +141,5 @@ class DrawView: UIView {
         currentLines.removeAll()
         setNeedsDisplay()
     }
-    
-   
     
 }
